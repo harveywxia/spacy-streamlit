@@ -145,13 +145,13 @@ def visualize_parser(
         "句子切分", value=True, key=f"{key}_parser_split_sents"
     )
     options = {
-        "Collapse punct": cols[1].checkbox(
+        "collapse_punct": cols[1].checkbox(
             "折叠标点", value=True, key=f"{key}_parser_collapse_punct"
         ),
-        "Collapse phrases": cols[2].checkbox(
+        "collapse_phrases": cols[2].checkbox(
             "折叠短语", key=f"{key}_parser_collapse_phrases"
         ),
-        "Compact mode": cols[3].checkbox("紧凑模式", key=f"{key}_parser_compact"),
+        "compact": cols[3].checkbox("紧凑模式", key=f"{key}_parser_compact"),
     }
     docs = [span.as_doc() for span in doc.sents] if split_sents else [doc]
     for sent in docs:
