@@ -250,3 +250,12 @@ nlp = load_model(spacy_model)
 | ----------- | ---------- | ------------------------------------------------------- |
 | `name`      | str        | Loadable spaCy model name. Can be path or package name. |
 | **RETURNS** | `Language` | The loaded `nlp` object.                                |
+
+
+#### 打包
+
+```bash
+python setup.py check
+
+python setup.py sdist bdist_wheel || true
+```

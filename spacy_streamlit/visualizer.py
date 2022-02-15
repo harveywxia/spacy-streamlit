@@ -10,12 +10,13 @@ from .util import load_model, process_text, get_svg, get_html, LOGO
 
 # fmt: off
 NER_ATTRS = ["text", "label_", "start", "end", "start_char", "end_char"]
+NER_ATTRS_COLUMN = ["文本", "标签", "开始位置", "结束位置", "开始字符位置", "结束字符位置"]
 TOKEN_ATTRS = ["idx", "text", "lemma_", "pos_", "tag_", "dep_", "head", "morph",
                "ent_type_", "ent_iob_", "shape_", "is_alpha", "is_ascii",
                "is_digit", "is_punct", "like_num", "is_sent_start"]
 # fmt: on
-FOOTER = """<span style="font-size: 0.75em">&hearts; Built with [`spacy-streamlit`](https://github.com/explosion/spacy-streamlit)</span>"""
-
+# FOOTER = """<span style="font-size: 0.75em">&hearts; Built with [`spacy-streamlit`](https://github.com/explosion/spacy-streamlit)</span>"""
+FOOTER = """ """
 
 def visualize(
     models: Union[List[str], Dict[str, str]],
@@ -26,6 +27,7 @@ def visualize(
     ner_attrs: List[str] = NER_ATTRS,
     similarity_texts: Tuple[str, str] = ("apple", "orange"),
     token_attrs: List[str] = TOKEN_ATTRS,
+    # 管道信息显示/隐藏
     show_json_doc: bool = True,
     show_meta: bool = True,
     show_config: bool = True,
@@ -66,7 +68,7 @@ def visualize(
         else 0
     )
     spacy_model = st.sidebar.selectbox(
-        "Model",
+        "模型",
         model_names,
         index=default_model_index,
         key=f"{key}_visualize_models",
@@ -77,13 +79,13 @@ def visualize(
     model_load_state.empty()
 
     if show_pipeline_info:
-        st.sidebar.subheader("Pipeline info")
+        st.sidebar.subheader("管道信息")
         desc = f"""<p style="font-size: 0.85em; line-height: 1.5"><strong>{spacy_model}:</strong> <code>v{nlp.meta['version']}</code>. {nlp.meta.get("description", "")}</p>"""
         st.sidebar.markdown(desc, unsafe_allow_html=True)
 
     if show_visualizer_select:
         active_visualizers = st.sidebar.multiselect(
-            "Visualizers",
+            "可视化",
             options=visualizers,
             default=list(visualizers),
             key=f"{key}_viz_select",
@@ -94,7 +96,7 @@ def visualize(
     default_text = (
         get_default_text(nlp) if get_default_text is not None else default_text
     )
-    text = st.text_area("Text to analyze", default_text, key=f"{key}_visualize_text")
+    text = st.text_area("待分析文本", default_text, key=f"{key}_visualize_text")
     doc = process_text(spacy_model, text)
 
     if "parser" in visualizers and "parser" in active_visualizers:
@@ -110,17 +112,17 @@ def visualize(
         visualize_tokens(doc, attrs=token_attrs, key=key)
 
     if show_json_doc or show_meta or show_config:
-        st.header("Pipeline information")
+        st.header("管道信息")
         if show_json_doc:
             json_doc_exp = st.expander("JSON Doc")
             json_doc_exp.json(doc.to_json())
 
         if show_meta:
-            meta_exp = st.expander("Pipeline meta.json")
+            meta_exp = st.expander("管道 meta.json")
             meta_exp.json(nlp.meta)
 
         if show_config:
-            config_exp = st.expander("Pipeline config.cfg")
+            config_exp = st.expander("管道 config.cfg")
             config_exp.code(nlp.config.to_str())
 
     st.sidebar.markdown(
@@ -132,7 +134,7 @@ def visualize(
 def visualize_parser(
     doc: spacy.tokens.Doc,
     *,
-    title: Optional[str] = "Dependency Parse & Part-of-speech tags",
+    title: Optional[str] = "依赖分析和词性标注",
     key: Optional[str] = None,
 ) -> None:
     """Visualizer for dependency parses."""
@@ -140,16 +142,16 @@ def visualize_parser(
         st.header(title)
     cols = st.columns(4)
     split_sents = cols[0].checkbox(
-        "Split sentences", value=True, key=f"{key}_parser_split_sents"
+        "句子切分", value=True, key=f"{key}_parser_split_sents"
     )
     options = {
-        "collapse_punct": cols[1].checkbox(
-            "Collapse punct", value=True, key=f"{key}_parser_collapse_punct"
+        "Collapse punct": cols[1].checkbox(
+            "折叠标点", value=True, key=f"{key}_parser_collapse_punct"
         ),
-        "collapse_phrases": cols[2].checkbox(
-            "Collapse phrases", key=f"{key}_parser_collapse_phrases"
+        "Collapse phrases": cols[2].checkbox(
+            "折叠短语", key=f"{key}_parser_collapse_phrases"
         ),
-        "compact": cols[3].checkbox("Compact mode", key=f"{key}_parser_compact"),
+        "Compact mode": cols[3].checkbox("紧凑模式", key=f"{key}_parser_compact"),
     }
     docs = [span.as_doc() for span in doc.sents] if split_sents else [doc]
     for sent in docs:
@@ -167,7 +169,7 @@ def visualize_ner(
     labels: Sequence[str] = tuple(),
     attrs: List[str] = NER_ATTRS,
     show_table: bool = True,
-    title: Optional[str] = "Named Entities",
+    title: Optional[str] = "命名实体",
     colors: Dict[str, str] = {},
     key: Optional[str] = None,
     manual: Optional[bool] = False,
@@ -212,9 +214,9 @@ def visualize_ner(
     if not labels:
         st.warning("The parameter 'labels' should not be empty or None.")
     else:
-        exp = st.expander("Select entity labels")
+        exp = st.expander("选择实体标签")
         label_select = exp.multiselect(
-            "Entity labels",
+            "实体标签",
             options=labels,
             default=list(labels),
             key=f"{key}_ner_label_select",
@@ -236,12 +238,12 @@ def visualize_ner(
                 if ent.label_ in label_select
             ]
             if data:
-                df = pd.DataFrame(data, columns=attrs)
+                df = pd.DataFrame(data, columns=NER_ATTRS_COLUMN)
                 st.dataframe(df)
 
 
 def visualize_textcat(
-    doc: spacy.tokens.Doc, *, title: Optional[str] = "Text Classification"
+    doc: spacy.tokens.Doc, *, title: Optional[str] = "文本聚类"
 ) -> None:
     """Visualizer for text categories."""
     if title:
@@ -256,7 +258,7 @@ def visualize_similarity(
     default_texts: Tuple[str, str] = ("apple", "orange"),
     *,
     threshold: float = 0.5,
-    title: Optional[str] = "Vectors & Similarity",
+    title: Optional[str] = "词向量和相似度",
     key: Optional[str] = None,
 ) -> None:
     """Visualizer for semantic similarity using word vectors."""
@@ -290,15 +292,15 @@ def visualize_tokens(
     doc: spacy.tokens.Doc,
     *,
     attrs: List[str] = TOKEN_ATTRS,
-    title: Optional[str] = "Token attributes",
+    title: Optional[str] = "Token 属性",
     key: Optional[str] = None,
 ) -> None:
     """Visualizer for token attributes."""
     if title:
         st.header(title)
-    exp = st.expander("Select token attributes")
+    exp = st.expander("选择 token 属性")
     selected = exp.multiselect(
-        "Token attributes",
+        "Token 属性",
         options=attrs,
         default=list(attrs),
         key=f"{key}_tokens_attr_select",
